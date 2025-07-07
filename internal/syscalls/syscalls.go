@@ -1,5 +1,10 @@
 package syscalls
 
+type SyscallEntry struct {
+	Name string   `json:"name"`
+	Args []string `json:"args,omitempty"`
+}
+
 var SyscallNames = map[uint64]string{
 	0:   "read",
 	1:   "write",

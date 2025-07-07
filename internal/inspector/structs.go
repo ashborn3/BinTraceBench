@@ -15,3 +15,10 @@ type OpenFile struct {
 	Target string `json:"target"`
 	Type   string `json:"type"`
 }
+
+type NetConnection struct {
+	Protocol string `json:"protocol"`
+	Local    string `json:"local"`
+	Remote   string `json:"remote"`
+	State    string `json:"state"`
+}

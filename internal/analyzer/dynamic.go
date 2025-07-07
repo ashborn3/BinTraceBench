@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
+
+	"github.com/ashborn3/BinTraceBench/internal/syscalls"
 )
 
 func TraceBinary(filebytes []byte) ([]string, error) {
@@ -53,6 +55,12 @@ func ptraceBinaryPath(path string) ([]string, error) {
 		if _, err := syscall.Wait4(pid, nil, 0, nil); err != nil {
 			break
 		}
+		if err := syscall.PtraceSyscall(pid, 0); err != nil {
+			break
+		}
+		if _, err := syscall.Wait4(pid, nil, 0, nil); err != nil {
+			break
+		}
 
 		var regs syscall.PtraceRegs
 		if err := syscall.PtraceGetRegs(pid, &regs); err != nil {
@@ -60,8 +68,12 @@ func ptraceBinaryPath(path string) ([]string, error) {
 		}
 
 		// Note: On x86_64 Linux, syscall number is in Orig_rax
-		syscallNum := regs.Orig_rax
-		logs = append(logs, fmt.Sprintf("syscall %d", syscallNum))
+		name := syscalls.SyscallNames[regs.Orig_rax]
+		if name == "" {
+			name = fmt.Sprintf("syscall %d", regs.Orig_rax)
+		}
+		logs = append(logs, name)
+
 	}
 
 	return logs, nil

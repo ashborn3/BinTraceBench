@@ -13,7 +13,6 @@ func TraceBinary(filebytes []byte) ([]string, error) {
 		return nil, fmt.Errorf("error creating temp file: %s", err.Error())
 	}
 	defer os.Remove(tmpfile.Name())
-	defer tmpfile.Close()
 
 	_, err = tmpfile.Write(filebytes)
 	if err != nil {
@@ -21,6 +20,7 @@ func TraceBinary(filebytes []byte) ([]string, error) {
 	}
 
 	tmpfile.Chmod(0755)
+	tmpfile.Close()
 
 	logs, err := ptraceBinaryPath(tmpfile.Name())
 	if err != nil {

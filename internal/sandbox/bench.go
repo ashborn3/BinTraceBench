@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ashborn3/BinTraceBench/internal/syscalls"
 )
 
 type BenchResult struct {
@@ -86,7 +89,8 @@ func RunBenchmarkWithTrace(filebytes []byte) (*BenchResult, error) {
 	var logs []string
 	for _, line := range lines {
 		if strings.TrimSpace(line) != "" {
-			logs = append(logs, line)
+			idx, _ := strconv.Atoi(line)
+			logs = append(logs, syscalls.SyscallNames[uint64(idx)])
 		}
 	}
 

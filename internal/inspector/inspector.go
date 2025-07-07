@@ -80,3 +80,40 @@ func GetOpenFiles(pid int) ([]OpenFile, error) {
 
 	return openfiles, nil
 }
+
+func GetNetworkConnections(pid int) ([]NetConnection, error) {
+	var conns []NetConnection
+	protos := []string{"tcp", "udp", "tcp6", "udp6"}
+
+	for _, proto := range protos {
+		path := fmt.Sprintf("/proc/%d/net/%s", pid, proto)
+		data, err := os.ReadFile(path)
+		if err != nil {
+			continue // process may not have connections in this proto
+		}
+
+		lines := strings.Split(string(data), "\n")
+		if len(lines) <= 1 {
+			continue
+		}
+
+		for _, line := range lines[1:] {
+			fields := strings.Fields(line)
+			if len(fields) < 10 {
+				continue
+			}
+
+			local := parseIPPort(fields[1])
+			remote := parseIPPort(fields[2])
+			state := tcpState(fields[3])
+
+			conns = append(conns, NetConnection{
+				Protocol: proto,
+				Local:    local,
+				Remote:   remote,
+				State:    state,
+			})
+		}
+	}
+	return conns, nil
+}

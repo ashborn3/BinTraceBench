@@ -7,8 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
-
-	"github.com/ashborn3/BinTraceBench/internal/syscalls"
 )
 
 func main() {
@@ -57,11 +55,7 @@ func main() {
 		var regs syscall.PtraceRegs
 		syscall.PtraceGetRegs(pid, &regs)
 
-		name := syscalls.SyscallNames[regs.Orig_rax]
-		if name == "" {
-			name = fmt.Sprintf("%d", regs.Orig_rax)
-		}
-		fmt.Println(name)
+		fmt.Printf("%d\n", regs.Orig_rax)
 
 		syscall.PtraceSyscall(pid, 0)
 		syscall.Wait4(pid, &status, 0, nil)

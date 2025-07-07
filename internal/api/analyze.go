@@ -6,11 +6,12 @@ import (
 	"net/http"
 
 	"github.com/ashborn3/BinTraceBench/internal/analyzer"
+	"github.com/ashborn3/BinTraceBench/internal/syscalls"
 )
 
 type AnalyzeResponse struct {
-	Static  *analyzer.BinaryInfo `json:"static"`
-	Dynamic []string             `json:"dynamic,omitempty"`
+	Static  *analyzer.BinaryInfo    `json:"static"`
+	Dynamic []syscalls.SyscallEntry `json:"dynamic,omitempty"`
 }
 
 func AnalyzeHandler() http.HandlerFunc {
@@ -38,7 +39,7 @@ func AnalyzeHandler() http.HandlerFunc {
 			return
 		}
 
-		var sysKalls []string
+		var sysKalls []syscalls.SyscallEntry
 		if isDyna {
 			sysKalls, err = analyzer.TraceBinary(data)
 			if err != nil {

@@ -18,4 +18,5 @@ func RegisterRoutes(router chi.Router) {
 	router.Get("/proc/{pid}", InspectorHandler())
 	router.Get("/proc/{pid}/files", OpenFileHandler())
 	router.Get("/proc/{pid}/net", NetConnectionsHandler())
+	router.Post("/bench", BenchmarkHandler())
 }

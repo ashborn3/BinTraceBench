@@ -55,7 +55,9 @@ func main() {
 		var regs syscall.PtraceRegs
 		syscall.PtraceGetRegs(pid, &regs)
 
-		fmt.Printf("%d\n", regs.Orig_rax)
+		fmt.Printf("%d %#x %#x %#x %#x %#x %#x\n",
+			regs.Orig_rax,
+			regs.Rdi, regs.Rsi, regs.Rdx, regs.R10, regs.R8, regs.R9)
 
 		syscall.PtraceSyscall(pid, 0)
 		syscall.Wait4(pid, &status, 0, nil)

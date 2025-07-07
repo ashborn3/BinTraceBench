@@ -13,10 +13,10 @@ import (
 )
 
 type BenchResult struct {
-	ExitCode  int      `json:"exit_code"`
-	RuntimeMS int64    `json:"runtime_ms"`
-	Success   bool     `json:"success"`
-	Syscalls  []string `json:"syscalls,omitempty"`
+	ExitCode  int                     `json:"exit_code"`
+	RuntimeMS int64                   `json:"runtime_ms"`
+	Success   bool                    `json:"success"`
+	Syscalls  []syscalls.SyscallEntry `json:"syscalls,omitempty"`
 }
 
 func RunBenchmark(filebytes []byte) (*BenchResult, error) {
@@ -86,11 +86,16 @@ func RunBenchmarkWithTrace(filebytes []byte) (*BenchResult, error) {
 	elapsed := time.Since(start)
 
 	lines := strings.Split(stdout.String(), "\n")
-	var logs []string
+	var logs []syscalls.SyscallEntry
 	for _, line := range lines {
 		if strings.TrimSpace(line) != "" {
-			idx, _ := strconv.Atoi(line)
-			logs = append(logs, syscalls.SyscallNames[uint64(idx)])
+			regVals := strings.Split(line, " ")
+
+			idx, _ := strconv.Atoi(regVals[0])
+			logs = append(logs, syscalls.SyscallEntry{
+				Name: syscalls.SyscallNames[uint64(idx)],
+				Args: regVals[1:],
+			})
 		}
 	}
 

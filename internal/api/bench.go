@@ -23,7 +23,13 @@ func BenchmarkHandler() http.HandlerFunc {
 			return
 		}
 
-		result, err := sandbox.RunBenchmark(data)
+		trace := r.URL.Query().Get("trace") == "true"
+		var result *sandbox.BenchResult
+		if trace {
+			result, err = sandbox.RunBenchmarkWithTrace(data)
+		} else {
+			result, err = sandbox.RunBenchmark(data)
+		}
 		if err != nil {
 			http.Error(w, "benchmark failed: "+err.Error(), http.StatusInternalServerError)
 			return

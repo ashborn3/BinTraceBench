@@ -7,16 +7,6 @@ import (
 	"strings"
 )
 
-type ProcInfo struct {
-	PID      int    `json:"pid"`
-	Command  string `json:"command"`
-	Cmdline  string `json:"cmdline"`
-	UID      int    `json:"uid"`
-	State    string `json:"state"`
-	CPUTime  string `json:"cpu_time"`
-	MemoryKB int    `json:"memory_kb"`
-}
-
 func GetProcInfo(pid int) (*ProcInfo, error) {
 	base := fmt.Sprintf("/proc/%d", pid)
 
@@ -54,21 +44,39 @@ func GetProcInfo(pid int) (*ProcInfo, error) {
 	}, err
 }
 
-func parseStatus(input string) map[string]string {
-	lines := strings.Split(input, "\n")
-	out := make(map[string]string)
-	for _, line := range lines {
-		parts := strings.SplitN(line, ":", 2)
-		if len(parts) == 2 {
-			key := strings.TrimSpace(parts[0])
-			val := strings.TrimSpace(parts[1])
-			out[key] = val
-		}
+func GetOpenFiles(pid int) ([]OpenFile, error) {
+	fdDir := fmt.Sprintf("/proc/%d/fd", pid)
+	entries, err := os.ReadDir(fdDir)
+	if err != nil {
+		return nil, fmt.Errorf("error reading file desc directory: %s", err.Error())
 	}
-	return out
-}
 
-func atoi(s string) int {
-	i, _ := strconv.Atoi(strings.Fields(s)[0]) // take only first part
-	return i
+	var openfiles []OpenFile
+	for _, entry := range entries {
+		linkPath := fmt.Sprintf("%s/%s", fdDir, entry.Name())
+		target, err := os.Readlink(linkPath)
+		if err != nil {
+			target = "unreadable"
+		}
+
+		var filetype string
+		switch {
+		case strings.HasPrefix(target, "socket:"):
+			filetype = "socket"
+		case strings.HasPrefix(target, "pipe:"):
+			filetype = "pipe"
+		case strings.HasPrefix(target, "/"):
+			filetype = "file"
+		default:
+			filetype = "other"
+		}
+
+		openfiles = append(openfiles, OpenFile{
+			FD:     entry.Name(),
+			Target: target,
+			Type:   filetype,
+		})
+	}
+
+	return openfiles, nil
 }

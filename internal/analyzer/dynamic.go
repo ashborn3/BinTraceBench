@@ -53,12 +53,6 @@ func ptraceBinaryPath(path string) ([]string, error) {
 		if _, err := syscall.Wait4(pid, nil, 0, nil); err != nil {
 			break
 		}
-		if err := syscall.PtraceSyscall(pid, 0); err != nil {
-			break
-		}
-		if _, err := syscall.Wait4(pid, nil, 0, nil); err != nil {
-			break
-		}
 
 		var regs syscall.PtraceRegs
 		if err := syscall.PtraceGetRegs(pid, &regs); err != nil {

@@ -13,4 +13,6 @@ func RegisterRoutes(router chi.Router) {
 	router.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong"))
 	})
+
+	router.Post("/analyze", AnalyzeHandler())
 }

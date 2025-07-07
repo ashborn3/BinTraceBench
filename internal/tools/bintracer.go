@@ -59,7 +59,7 @@ func main() {
 
 		name := syscalls.SyscallNames[regs.Orig_rax]
 		if name == "" {
-			name = fmt.Sprintf("syscall_%d", regs.Orig_rax)
+			name = fmt.Sprintf("%d", regs.Orig_rax)
 		}
 		fmt.Println(name)
 

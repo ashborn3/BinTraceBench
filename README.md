@@ -1,6 +1,6 @@
 # 🧠 BinTraceBench
 
-**BinTraceBench** is a systems-level backend tool written in Go that performs **static and dynamic analysis of binaries**, **live process inspection**, and **sandboxed benchmarking** — all accessible through a clean **RESTful API**.
+**BinTraceBench** is a systems-level backend tool written in Go that performs **static and dynamic analysis of binaries**, **live process inspection**, and **sandboxed benchmarking** - all accessible through a clean **RESTful API**.
 
 > 📦 For developers, security researchers, reverse engineers, and performance analysts.
 
@@ -9,7 +9,7 @@
 ## 🚀 Features
 
 ### 🔍 Binary Analyzer
-- **Static Analysis**: ELF/PE parsing — symbols, headers, sections, strings
+- **Static Analysis**: ELF/PE parsing - symbols, headers, sections, strings
 - **Dynamic Tracing**: `ptrace`-based syscall tracing with full argument dumps
 
 ### 🧪 Sandboxed Benchmarking
@@ -75,15 +75,15 @@ go build -o bintracebench ./cmd/bintracebench
 
 ## 🧪 Testing with Python
 
-Use the provided [test script](./test_bintracebench.py):
+Use the provided [test script](./scripts/endpointTester.py):
 
 ```bash
-python3 test_bintracebench.py
+python3 ./scripts/endpointTester.py
 ```
 
 ---
 
-## 📚 Example Output
+## 📚 Sample Output
 
 ```json
 {

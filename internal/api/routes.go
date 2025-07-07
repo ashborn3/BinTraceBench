@@ -15,4 +15,6 @@ func RegisterRoutes(router chi.Router) {
 	})
 
 	router.Post("/analyze", AnalyzeHandler())
+
+	router.Get("/proc/{pid}", InspectorHandler())
 }

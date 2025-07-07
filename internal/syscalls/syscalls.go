@@ -1,7 +1,7 @@
 package syscalls
 
 type SyscallEntry struct {
-	Name string   `json:"name"`
+	Name string   `json:"name,omitempty"`
 	Args []string `json:"args,omitempty"`
 }
 

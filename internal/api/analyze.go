@@ -8,8 +8,15 @@ import (
 	"github.com/ashborn3/BinTraceBench/internal/analyzer"
 )
 
+type AnalyzeResponse struct {
+	Static  *analyzer.BinaryInfo `json:"static"`
+	Dynamic []string             `json:"dynamic,omitempty"`
+}
+
 func AnalyzeHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		isDyna := r.URL.Query().Get("dynamic") == "true"
+
 		r.ParseMultipartForm(100 << 20)
 
 		file, _, err := r.FormFile("file")
@@ -31,7 +38,21 @@ func AnalyzeHandler() http.HandlerFunc {
 			return
 		}
 
+		var sysKalls []string
+		if isDyna {
+			sysKalls, err = analyzer.TraceBinary(data)
+			if err != nil {
+				http.Error(w, "Dynamic analysis failed: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(result)
+		res := AnalyzeResponse{
+			Static:  result,
+			Dynamic: sysKalls,
+		}
+		json.NewEncoder(w).Encode(res)
+
 	}
 }

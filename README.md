@@ -115,6 +115,8 @@ python3 ./scripts/endpointTester.py
 * [x] Sandbox + benchmarking
 * [x] Live process inspection
 * [ ] SQLite-based persistent storage
+* [ ] More detailed binary analysis
+* [ ] LLM-based insights on binary analysis
 * [ ] Return value and errno analysis
 * [ ] Export results to JSON/HTML
 * [ ] Syscall statistics & timeline view

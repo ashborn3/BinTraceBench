@@ -1,23 +1,23 @@
-# 🧠 BinTraceBench
+# BinTraceBench
 
 **BinTraceBench** is a systems-level backend tool written in Go that performs **static and dynamic analysis of binaries**, **live process inspection**, and **sandboxed benchmarking** - all accessible through a clean **RESTful API**.
 
-> 📦 For developers, security researchers, reverse engineers, and performance analysts.
+> Not for developers, security researchers, reverse engineers, and performance analysts.
 
 ---
 
-## 🚀 Features
+## Features
 
 ### 🔍 Binary Analyzer
 - **Static Analysis**: ELF/PE parsing - symbols, headers, sections, strings
 - **Dynamic Tracing**: `ptrace`-based syscall tracing with full argument dumps
 
-### 🧪 Sandboxed Benchmarking
+### Sandboxed Benchmarking
 - Run binaries inside Linux namespaces (`unshare`)
 - Collect execution time, exit code, success status
 - Optional dynamic tracing during benchmark
 
-### 👁️ Live Process Inspector
+### Live Process Inspector
 - Inspect `/proc/:pid` to view:
   - Command-line args
   - Open file descriptors
@@ -25,7 +25,7 @@
 
 ---
 
-## 🔧 REST API Endpoints
+## REST API Endpoints
 
 ### Binary Analysis
 | Method | Endpoint                        | Description                      |
@@ -49,13 +49,13 @@
 
 ---
 
-## ⚙️ Getting Started
+## Getting Started
 
-### 🛠 Requirements
+### Requirements
 - Go 1.20+
 - Linux OS (for `ptrace`, `/proc`, `unshare`)
 
-### 📦 Installation
+### Installation
 
 ```bash
 git clone https://github.com/yourname/BinTraceBench.git
@@ -64,7 +64,7 @@ go build -o bintracer ./internal/tools/bintracer.go
 go build -o bintracebench ./cmd/bintracebench
 ````
 
-### ▶️ Running the Server
+### Running the Server
 
 ```bash
 ./bintracebench
@@ -73,7 +73,7 @@ go build -o bintracebench ./cmd/bintracebench
 
 ---
 
-## 🧪 Testing with Python
+## Testing with Python
 
 Use the provided [test script](./scripts/endpointTester.py):
 
@@ -83,7 +83,7 @@ python3 ./scripts/endpointTester.py
 
 ---
 
-## 📚 Sample Output
+## Sample Output
 
 ```json
 {
@@ -108,7 +108,7 @@ python3 ./scripts/endpointTester.py
 
 ---
 
-## 🧭 Roadmap
+## Roadmap
 
 * [x] Static binary parsing
 * [x] Dynamic syscall tracing
@@ -124,19 +124,9 @@ python3 ./scripts/endpointTester.py
 
 ---
 
-## 🤝 Contributing
+## Credits
 
-Contributions are welcome! Feel free to:
-
-* Report issues
-* Suggest improvements
-* Submit pull requests
-
----
-
-## ✨ Credits
-
-Built with ❤️ by [ashborn3](https://github.com/ashborn3)
+Built in pain by [ashborn3](https://github.com/ashborn3)
 Inspired by strace, perf, and devtools used in systems programming.
 
 ```

@@ -15,7 +15,6 @@ def upload_file(endpoint: str, binary_path: str, params=None):
         print("Raw Response:", res.text[:500])
 
 def test_all(binary_path):
-    # Adjust endpoints according to how you've structured them
     upload_file("/analyze", binary_path)
     upload_file("/analyze", binary_path, params={"dynamic": "true"})
     upload_file("/bench", binary_path)

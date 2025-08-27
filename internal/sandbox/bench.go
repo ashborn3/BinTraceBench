@@ -13,10 +13,12 @@ import (
 )
 
 type BenchResult struct {
-	ExitCode  int                     `json:"exit_code"`
-	RuntimeMS int64                   `json:"runtime_ms"`
-	Success   bool                    `json:"success"`
-	Syscalls  []syscalls.SyscallEntry `json:"syscalls,omitempty"`
+	CGroup       string                  `json:"c_group"`
+	InvocationID string                  `json:"invocation_id"` // Question: what's the use for this?
+	ExitCode     int                     `json:"exit_code"`
+	RuntimeMS    int64                   `json:"runtime_ms"`
+	Success      bool                    `json:"success"`
+	Syscalls     []syscalls.SyscallEntry `json:"syscalls,omitempty"`
 }
 
 func RunBenchmark(filebytes []byte) (*BenchResult, error) {
@@ -71,7 +73,13 @@ func RunBenchmarkWithTrace(filebytes []byte) (*BenchResult, error) {
 	tmpfile.Chmod(0755)
 	tmpfile.Close()
 
-	cmd := exec.Command("unshare",
+	cmd := exec.Command( // give config options to user later
+		"systemd-run",
+		"--scope",
+		"-p", "MemoryMax=32M",
+		"-p", "CPUQuota=10%",
+		"-p", "TasksMax=10",
+		"unshare",
 		"--mount", "--uts", "--ipc", "--net", "--pid", "--fork", "--user",
 		"--map-root-user",
 		"./bintracer", tmpfile.Name(),
@@ -84,13 +92,27 @@ func RunBenchmarkWithTrace(filebytes []byte) (*BenchResult, error) {
 	start := time.Now()
 	err = cmd.Run()
 	elapsed := time.Since(start)
-
 	lines := strings.Split(stdout.String(), "\n")
 	var logs []syscalls.SyscallEntry
-	for _, line := range lines {
+	var cgroupName, invocationID string
+
+	if len(lines) > 0 {
+		firstLine := strings.TrimSpace(lines[0])
+		if strings.HasPrefix(firstLine, "Running as unit:") {
+			// "Running as unit: run-r03369332ebd9417c89fbefe2f3853162.scope; invocation ID: 84495dcd32c040348d67aeeffa22b498"
+			parts := strings.Split(firstLine, ";")
+			if len(parts) >= 2 {
+				unitPart := strings.TrimPrefix(strings.TrimSpace(parts[0]), "Running as unit:")
+				cgroupName = strings.TrimSpace(unitPart)
+				invIDPart := strings.TrimPrefix(strings.TrimSpace(parts[1]), "invocation ID:")
+				invocationID = strings.TrimSpace(invIDPart)
+			}
+		}
+	}
+
+	for _, line := range lines[1:] {
 		if strings.TrimSpace(line) != "" {
 			regVals := strings.Split(line, " ")
-
 			idx, _ := strconv.Atoi(regVals[0])
 			logs = append(logs, syscalls.SyscallEntry{
 				Name: syscalls.SyscallNames[uint64(idx)],
@@ -105,9 +127,11 @@ func RunBenchmarkWithTrace(filebytes []byte) (*BenchResult, error) {
 	}
 
 	return &BenchResult{
-		ExitCode:  exitCode,
-		RuntimeMS: elapsed.Milliseconds(),
-		Success:   exitCode == 0,
-		Syscalls:  logs,
+		CGroup:       cgroupName,
+		InvocationID: invocationID,
+		ExitCode:     exitCode,
+		RuntimeMS:    elapsed.Milliseconds(),
+		Success:      exitCode == 0,
+		Syscalls:     logs,
 	}, nil
 }

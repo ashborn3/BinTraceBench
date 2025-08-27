@@ -17,7 +17,7 @@ def upload_file(endpoint: str, binary_path: str, params=None):
 def test_all(binary_path):
     upload_file("/analyze", binary_path)
     upload_file("/analyze", binary_path, params={"dynamic": "true"})
-    upload_file("/bench", binary_path)
+    upload_file("/bench", binary_path, params={"trace": "true"})
 
 if __name__ == "__main__":
     test_all("/bin/ls")

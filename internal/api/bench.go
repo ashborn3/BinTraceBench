@@ -28,7 +28,7 @@ func BenchmarkHandler() http.HandlerFunc {
 		if trace {
 			result, err = sandbox.RunBenchmarkWithTrace(data)
 		} else {
-			result, err = sandbox.RunBenchmark(data)
+			result, err = sandbox.RunBenchmark(data) // very unsafe, minimal hardening, why even do this?
 		}
 		if err != nil {
 			http.Error(w, "benchmark failed: "+err.Error(), http.StatusInternalServerError)

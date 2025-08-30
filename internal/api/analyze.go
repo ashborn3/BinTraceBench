@@ -2,13 +2,14 @@ package api
 
 import (
 	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/ashborn3/BinTraceBench/internal/analyzer"
 	"github.com/ashborn3/BinTraceBench/internal/auth"
 	"github.com/ashborn3/BinTraceBench/internal/database"
 	"github.com/ashborn3/BinTraceBench/internal/sandbox"
+	"github.com/ashborn3/BinTraceBench/internal/validation"
+	"github.com/ashborn3/BinTraceBench/pkg/logging"
 )
 
 type AnalyzeResponse struct {
@@ -28,18 +29,10 @@ func AnalyzeHandler(db database.Database) http.HandlerFunc {
 
 		isDyna := r.URL.Query().Get("dynamic") == "true"
 
-		r.ParseMultipartForm(100 << 20)
-
-		file, header, err := r.FormFile("file")
+		header, data, err := validation.ValidateFileUpload(r)
 		if err != nil {
-			http.Error(w, "Missing file in request", http.StatusBadRequest)
-			return
-		}
-		defer file.Close()
-
-		data, err := io.ReadAll(file)
-		if err != nil {
-			http.Error(w, "Failed to read file", http.StatusInternalServerError)
+			logging.Warn("File upload validation failed", "error", err, "user", user.Username)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -52,9 +45,8 @@ func AnalyzeHandler(db database.Database) http.HandlerFunc {
 		fileHash := auth.GenerateFileHash(data)
 		filename := header.Filename
 
-		cached, err := db.GetAnalysisResultByHash(user.ID, fileHash)
-		if err == nil && cached != nil {
-			// Return cached results
+		if cached, err := db.GetAnalysisResultByHash(user.ID, fileHash); err == nil && cached != nil {
+			logging.Info("Returning cached analysis", "user", user.Username, "file", filename)
 			response := AnalyzeResponse{
 				ID:      cached.ID,
 				Static:  cached.StaticData,

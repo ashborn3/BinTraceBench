@@ -19,6 +19,8 @@ func RegisterRoutes(router chi.Router, db database.Database) {
 	router.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong"))
 	})
+	router.Get("/health", HealthHandler(db))
+	router.Get("/ready", ReadinessHandler(db))
 
 	// Authentication routes
 	router.Post("/auth/register", authHandler.Register())

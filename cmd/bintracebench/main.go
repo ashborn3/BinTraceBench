@@ -4,9 +4,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/ashborn3/BinTraceBench/internal/api"
+	"github.com/ashborn3/BinTraceBench/internal/cleanup"
 	"github.com/ashborn3/BinTraceBench/internal/config"
 	"github.com/ashborn3/BinTraceBench/internal/database"
 	customMiddleware "github.com/ashborn3/BinTraceBench/internal/middleware"
@@ -71,10 +75,22 @@ func main() {
 
 	api.RegisterRoutes(router, db)
 
+	// Start cleanup service
+	cleanupService := cleanup.NewService(db, 10*time.Minute)
+	cleanupService.Start()
+	defer cleanupService.Stop()
+
+	// Setup graceful shutdown
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
 	// Start server
 	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
 	fmt.Printf("Server starting on http://%s\n", addr)
+	logging.Info("Server starting", "address", addr)
 	fmt.Println("API Documentation:")
+	fmt.Println("  GET  /health        - Health check")
+	fmt.Println("  GET  /ready         - Readiness check")
 	fmt.Println("  POST /auth/register - Register new user")
 	fmt.Println("  POST /auth/login    - Login user")
 	fmt.Println("  GET  /auth/me       - Get current user info")
@@ -92,7 +108,15 @@ func main() {
 	fmt.Println("All endpoints except /auth/register and /auth/login require authentication")
 	fmt.Println("Use Authorization: Bearer <token> header for authenticated requests")
 
-	if err := http.ListenAndServe(addr, router); err != nil {
-		log.Fatalf("Server failed to start: %v", err)
-	}
+	// Start server in goroutine for graceful shutdown
+	go func() {
+		if err := http.ListenAndServe(addr, router); err != nil {
+			log.Fatalf("Server failed to start: %v", err)
+		}
+	}()
+
+	// Wait for shutdown signal
+	<-sigChan
+	logging.Info("Shutting down server...")
+	fmt.Println("Server shutting down...")
 }

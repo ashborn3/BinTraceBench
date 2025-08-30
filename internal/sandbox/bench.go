@@ -22,24 +22,20 @@ type BenchResult struct {
 }
 
 func RunBenchmark(filebytes []byte) (*BenchResult, error) {
-	tmpfile, err := os.CreateTemp("", "bintracebench-*")
-	if err != nil {
-		return nil, fmt.Errorf("error creating temp file: %s", err.Error())
-	}
-	defer os.Remove(tmpfile.Name())
-
-	_, err = tmpfile.Write(filebytes)
-	if err != nil {
-		return nil, fmt.Errorf("error writing bytes to temp file: %s", err.Error())
+	if err := ValidateBinary(filebytes); err != nil {
+		return nil, fmt.Errorf("binary validation failed: %v", err)
 	}
 
-	tmpfile.Chmod(0755)
-	tmpfile.Close()
+	tmpPath, cleanup, err := CreateSecureTempFile(filebytes, "benchmark")
+	if err != nil {
+		return nil, err
+	}
+	defer cleanup()
 
 	cmd := exec.Command("unshare",
 		"--mount", "--uts", "--ipc", "--net", "--pid", "--fork", "--user",
 		"--map-root-user",
-		tmpfile.Name(),
+		tmpPath,
 	)
 
 	start := time.Now()
@@ -59,19 +55,15 @@ func RunBenchmark(filebytes []byte) (*BenchResult, error) {
 }
 
 func RunBenchmarkWithTrace(filebytes []byte) (*BenchResult, error) {
-	tmpfile, err := os.CreateTemp("", "bintracebench-*")
-	if err != nil {
-		return nil, fmt.Errorf("error creating temp file: %s", err.Error())
-	}
-	defer os.Remove(tmpfile.Name())
-
-	_, err = tmpfile.Write(filebytes)
-	if err != nil {
-		return nil, fmt.Errorf("error writing bytes to temp file: %s", err.Error())
+	if err := ValidateBinary(filebytes); err != nil {
+		return nil, fmt.Errorf("binary validation failed: %v", err)
 	}
 
-	tmpfile.Chmod(0755)
-	tmpfile.Close()
+	tmpPath, cleanup, err := CreateSecureTempFile(filebytes, "benchmark-trace")
+	if err != nil {
+		return nil, err
+	}
+	defer cleanup()
 
 	cmd := exec.Command( // give config options to user later
 		"systemd-run",
@@ -82,7 +74,7 @@ func RunBenchmarkWithTrace(filebytes []byte) (*BenchResult, error) {
 		"unshare",
 		"--mount", "--uts", "--ipc", "--net", "--pid", "--fork", "--user",
 		"--map-root-user",
-		"./bintracer", tmpfile.Name(),
+		"./bintracer", tmpPath,
 	)
 
 	var stdout bytes.Buffer

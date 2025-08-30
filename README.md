@@ -1,132 +1,131 @@
 # BinTraceBench
 
-**BinTraceBench** is a systems-level backend tool written in Go that performs **static and dynamic analysis of binaries**, **live process inspection**, and **sandboxed benchmarking** - all accessible through a clean **RESTful API**.
-
-> Not for developers, security researchers, reverse engineers, and performance analysts.
-
----
+A secure backend API for binary analysis, benchmarking, and process inspection with persistent storage.
 
 ## Features
 
-### 🔍 Binary Analyzer
-- **Static Analysis**: ELF/PE parsing - symbols, headers, sections, strings
-- **Dynamic Tracing**: `ptrace`-based syscall tracing with full argument dumps
+- Static and dynamic binary analysis with ELF parsing and ptrace syscall tracing
+- Sandboxed benchmarking with Linux namespaces and resource limiting
+- Live process inspection via /proc filesystem
+- User authentication with bcrypt password hashing
+- SQLite and PostgreSQL database support
+- File hash-based result caching
+- RESTful API with comprehensive endpoints
 
-### Sandboxed Benchmarking
-- Run binaries inside Linux namespaces (`unshare`)
-- Collect execution time, exit code, success status
-- Optional dynamic tracing during benchmark
-
-### Live Process Inspector
-- Inspect `/proc/:pid` to view:
-  - Command-line args
-  - Open file descriptors
-  - Network connections
-
----
-
-## REST API Endpoints
-
-### Binary Analysis
-| Method | Endpoint                        | Description                      |
-|--------|----------------------------------|----------------------------------|
-| `POST` | `/analyze`                       | Static binary analysis           |
-| `POST` | `/analyze?dynamic=true`          | Dynamic tracing using `ptrace`   |
-| `GET`  | `/analyze/:id/logs` *(optional)* | Retrieve previous trace logs     |
-
-### Benchmarking
-| Method | Endpoint        | Description                                |
-|--------|------------------|--------------------------------------------|
-| `POST` | `/bench`         | Run binary in sandbox and benchmark        |
-| `GET`  | `/bench/:id`     | *(optional)* Fetch previous benchmark data |
-
-### Process Inspection
-| Method | Endpoint               | Description                    |
-|--------|-------------------------|--------------------------------|
-| `GET`  | `/proc/:pid`            | Basic process info             |
-| `GET`  | `/proc/:pid/files`      | Open file descriptors          |
-| `GET`  | `/proc/:pid/net`        | Network connections            |
-
----
-
-## Getting Started
-
-### Requirements
-- Go 1.20+
-- Linux OS (for `ptrace`, `/proc`, `unshare`)
+## Quick Start
 
 ### Installation
 
 ```bash
-git clone https://github.com/yourname/BinTraceBench.git
+git clone https://github.com/ashborn3/BinTraceBench.git
 cd BinTraceBench
-go build -o bintracer ./internal/tools/bintracer.go
+go mod tidy
 go build -o bintracebench ./cmd/bintracebench
-````
+```
 
-### Running the Server
+### Configuration
+
+```bash
+# SQLite (default)
+export DB_TYPE=sqlite
+export SQLITE_PATH=./data/bintracebench.db
+
+# PostgreSQL (optional)
+export DB_TYPE=postgresql
+export POSTGRES_HOST=localhost
+export POSTGRES_USER=bintracebench
+export POSTGRES_PASSWORD=password
+export POSTGRES_DB=bintracebench
+```
+
+### Run Server
 
 ```bash
 ./bintracebench
-# Server runs on http://localhost:8080
+# Server starts on http://localhost:8080
 ```
 
----
+## API Endpoints
 
-## Testing with Python
+### Authentication
+- POST `/auth/register` - Register new user
+- POST `/auth/login` - Login and get access token
+- GET `/auth/me` - Get current user info
+- POST `/auth/logout` - Logout
 
-Use the provided [test script](./scripts/endpointTester.py):
+### Binary Analysis (Protected)
+- POST `/analyze` - Static analysis
+- POST `/analyze?dynamic=true` - Dynamic tracing
+- GET `/analyze` - List user's results
+- GET `/analyze/{id}` - Get specific result
+- DELETE `/analyze/{id}` - Delete result
+
+### Benchmarking (Protected)
+- POST `/bench` - Run benchmark
+- POST `/bench?trace=true` - Benchmark with tracing
+- GET `/bench` - List benchmark results
+- GET `/bench/{id}` - Get specific benchmark
+- DELETE `/bench/{id}` - Delete benchmark
+
+### Process Inspection (Protected)
+- GET `/proc/{pid}` - Process info
+- GET `/proc/{pid}/files` - Open file descriptors
+- GET `/proc/{pid}/net` - Network connections
+
+## Usage Example
 
 ```bash
-python3 ./scripts/endpointTester.py
+# Register user
+curl -X POST http://localhost:8080/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"user","password":"pass123","email":"user@example.com"}'
+
+# Login
+TOKEN=$(curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"user","password":"pass123"}' | jq -r '.token')
+
+# Analyze binary
+curl -X POST http://localhost:8080/analyze \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "file=@/bin/ls"
+
+# Run benchmark
+curl -X POST http://localhost:8080/bench \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "file=@/bin/ls"
 ```
 
----
+## Testing
 
-## Sample Output
+Run the automated test script:
 
-```json
-{
-  "exit_code": 0,
-  "runtime_ms": 42,
-  "success": true,
-  "syscalls": [
-    {
-      "name": "execve",
-      "args": [
-        "arg0=0x55f8aa23b000",
-        "arg1=0x7ffd6c28b6a8",
-        "arg2=0x7ffd6c28b6b0",
-        "arg3=0x0",
-        "arg4=0x0",
-        "arg5=0x0"
-      ]
-    }
-  ]
-}
+```bash
+python3 scripts/endpointTester.py
 ```
 
----
+## Requirements
 
-## Roadmap
+- Go 1.20+
+- Linux OS
+- SQLite3 or PostgreSQL
 
-* [x] Static binary parsing
-* [x] Dynamic syscall tracing
-* [x] Sandbox + benchmarking
-* [x] Live process inspection
-* [ ] SQLite-based persistent storage
-* [x] More detailed binary analysis
-* [ ] LLM-based insights on binary analysis
-* [ ] Return value and errno analysis
-* [ ] Export results to JSON/HTML
-* [ ] Syscall statistics & timeline view
-* [ ] Web dashboard UI (optional) [Ahh Frontend man, my old nemesis...]
+## Database Schema
 
----
+The system uses four main tables:
+- `users` - User accounts with bcrypt password hashing
+- `sessions` - Authentication sessions with token expiry
+- `analysis_results` - Binary analysis results with file hash caching
+- `benchmark_results` - Benchmark results with execution metrics
 
-## Credits
+## Security
 
-Built in pain by [ashborn3](https://github.com/ashborn3)
-Inspired by strace, perf, and devtools used in systems programming.
+- All endpoints except registration/login require authentication
+- Bcrypt password hashing with salt
+- Session-based token authentication with configurable expiry
+- User data isolation and access control
+- SQL injection protection with parameterized queries
 
-```
+## License
+
+MIT License

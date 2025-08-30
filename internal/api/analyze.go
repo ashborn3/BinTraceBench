@@ -8,6 +8,7 @@ import (
 	"github.com/ashborn3/BinTraceBench/internal/analyzer"
 	"github.com/ashborn3/BinTraceBench/internal/auth"
 	"github.com/ashborn3/BinTraceBench/internal/database"
+	"github.com/ashborn3/BinTraceBench/internal/sandbox"
 )
 
 type AnalyzeResponse struct {
@@ -39,6 +40,12 @@ func AnalyzeHandler(db database.Database) http.HandlerFunc {
 		data, err := io.ReadAll(file)
 		if err != nil {
 			http.Error(w, "Failed to read file", http.StatusInternalServerError)
+			return
+		}
+
+		// Validate binary before analysis
+		if err := sandbox.ValidateBinary(data); err != nil {
+			http.Error(w, "Binary validation failed: "+err.Error(), http.StatusBadRequest)
 			return
 		}
 

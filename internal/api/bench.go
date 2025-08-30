@@ -17,6 +17,10 @@ type BenchmarkResponse struct {
 }
 
 func BenchmarkHandler(db database.Database) http.HandlerFunc {
+	return BenchmarkHandlerWithConfig(db, sandbox.DefaultConfig())
+}
+
+func BenchmarkHandlerWithConfig(db database.Database, config *sandbox.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := auth.GetUserFromContext(r.Context())
 		if user == nil {
@@ -56,9 +60,9 @@ func BenchmarkHandler(db database.Database) http.HandlerFunc {
 
 		var result *sandbox.BenchResult
 		if trace {
-			result, err = sandbox.RunBenchmarkWithTrace(data)
+			result, err = sandbox.RunBenchmarkWithTraceSecure(data, config)
 		} else {
-			result, err = sandbox.RunBenchmark(data) // very unsafe, minimal hardening, why even do this?
+			result, err = sandbox.RunBenchmarkSecure(data, config)
 		}
 		if err != nil {
 			http.Error(w, "benchmark failed: "+err.Error(), http.StatusInternalServerError)

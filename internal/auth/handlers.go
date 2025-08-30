@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ashborn3/BinTraceBench/internal/database"
+	"github.com/ashborn3/BinTraceBench/pkg/logging"
 )
 
 type Handler struct {
@@ -108,20 +109,25 @@ func (h *Handler) Login() http.HandlerFunc {
 		}
 
 		if user == nil {
+			logging.Warn("Login attempt with invalid username", "username", req.Username, "ip", r.RemoteAddr)
 			h.writeErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
 			return
 		}
 
 		if !h.service.CheckPassword(req.Password, user.Password) {
+			logging.Warn("Login attempt with invalid password", "username", req.Username, "ip", r.RemoteAddr)
 			h.writeErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
 			return
 		}
 
 		token, err := h.service.GenerateToken()
 		if err != nil {
+			logging.Error("Failed to generate token", "error", err, "username", req.Username)
 			h.writeErrorResponse(w, http.StatusInternalServerError, "Failed to generate token")
 			return
 		}
+
+		logging.Info("User logged in", "username", req.Username, "ip", r.RemoteAddr)
 
 		expires := SessionExpiry()
 		session := &database.Session{

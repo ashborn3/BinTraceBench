@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/ashborn3/BinTraceBench/internal/api"
 	"github.com/ashborn3/BinTraceBench/internal/config"
 	"github.com/ashborn3/BinTraceBench/internal/database"
+	customMiddleware "github.com/ashborn3/BinTraceBench/internal/middleware"
+	"github.com/ashborn3/BinTraceBench/pkg/logging"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -38,9 +41,13 @@ func main() {
 	defer db.Close()
 
 	fmt.Println("Database connected successfully")
+	logging.Info("Database connected", "type", cfg.Database.Type)
 
 	router := chi.NewRouter()
 
+	rateLimiter := customMiddleware.NewRateLimiter(10, time.Minute)
+	router.Use(rateLimiter.Middleware)
+	
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.RequestID)

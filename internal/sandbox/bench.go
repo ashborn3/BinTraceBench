@@ -18,6 +18,7 @@ type BenchResult struct {
 	ExitCode     int                     `json:"exit_code"`
 	RuntimeMS    int64                   `json:"runtime_ms"`
 	Success      bool                    `json:"success"`
+	ErrorMessage string                  `json:"error_message,omitempty"`
 	Syscalls     []syscalls.SyscallEntry `json:"syscalls,omitempty"`
 }
 

@@ -13,15 +13,19 @@ const (
 )
 
 func ValidateBinary(data []byte) error {
+	return ValidateBinaryWithConfig(data, DefaultConfig())
+}
+
+func ValidateBinaryWithConfig(data []byte, config *Config) error {
 	if len(data) == 0 {
 		return fmt.Errorf("empty file")
 	}
 
-	if len(data) > MaxFileSize {
-		return fmt.Errorf("file too large: %d bytes (max %d)", len(data), MaxFileSize)
+	if int64(len(data)) > config.MaxFileSize {
+		return fmt.Errorf("file too large: %d bytes (max %d)", len(data), config.MaxFileSize)
 	}
 
-	// ELF file can't be less than 4
+	// Check if it's an ELF file
 	if len(data) < 4 {
 		return fmt.Errorf("file too small to be a valid binary")
 	}
@@ -31,6 +35,7 @@ func ValidateBinary(data []byte) error {
 		return fmt.Errorf("not a valid ELF binary")
 	}
 
+	// Try to parse as ELF to ensure it's valid
 	reader := bytes.NewReader(data)
 	_, err := elf.NewFile(reader)
 	if err != nil {
@@ -52,6 +57,26 @@ func CreateSecureTempFile(data []byte, prefix string) (string, func(), error) {
 	}
 
 	// restricted permissions
+	err = os.WriteFile(tempFile, data, 0700) // Owner read/write/execute only
+	if err != nil {
+		cleanup()
+		return "", nil, fmt.Errorf("failed to write temp file: %v", err)
+	}
+
+	return tempFile, cleanup, nil
+}
+
+func CreateSecureTempFileWithConfig(data []byte, prefix string, config *Config) (string, func(), error) {
+	tempDir, err := os.MkdirTemp("", config.TempDirPrefix+"-*")
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to create temp directory: %v", err)
+	}
+	tempFile := filepath.Join(tempDir, prefix+"-binary")
+
+	cleanup := func() {
+		os.RemoveAll(tempDir)
+	}
+
 	err = os.WriteFile(tempFile, data, 0700) // Owner read/write/execute only
 	if err != nil {
 		cleanup()

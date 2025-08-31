@@ -8,13 +8,37 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+var api_docs string = `
+Hello, BinTraceBench!
+
+API Documentation:
+  GET  /health        - Health check
+  GET  /ready         - Readiness check
+  POST /auth/register - Register new user
+  POST /auth/login    - Login user
+  GET  /auth/me       - Get current user info
+  POST /auth/logout   - Logout user
+  POST /analyze       - Analyze binary (with optional ?dynamic=true)
+  GET  /analyze       - List all analysis results
+  GET  /analyze/{id}  - Get specific analysis result
+  POST /bench         - Benchmark binary (with optional ?trace=true)
+  GET  /bench         - List all benchmark results
+  GET  /bench/{id}    - Get specific benchmark result
+  GET  /proc/{pid}    - Inspect process
+  GET  /proc/{pid}/files - Get process open files
+  GET  /proc/{pid}/net   - Get process network connections
+
+All endpoints except /auth/register and /auth/login require authentication
+Use Authorization: Bearer <token> header for authenticated requests
+`
+
 func RegisterRoutes(router chi.Router, db database.Database) {
 	authMiddleware := auth.NewMiddleware(db)
 	authHandler := auth.NewHandler(db)
 
 	// Public routes
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello, BinTraceBench!"))
+		w.Write([]byte(api_docs))
 	})
 	router.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong"))

@@ -75,7 +75,7 @@ func RunBenchmarkWithTrace(filebytes []byte) (*BenchResult, error) {
 		"unshare",
 		"--mount", "--uts", "--ipc", "--net", "--pid", "--fork", "--user",
 		"--map-root-user",
-		"./bintracer", tmpPath,
+		"./bintracer.out", tmpPath,
 	)
 
 	var stdout bytes.Buffer

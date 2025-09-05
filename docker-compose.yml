@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: bintracebench
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: bintracebench
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    depends_on:
+      - db
+    environment:
+      DB_TYPE: postgresql
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: bintracebench
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: bintracebench
+      POSTGRES_SSLMODE: disable
+    ports:
+      - "8080:8080"
+
+volumes:
+  db_data:

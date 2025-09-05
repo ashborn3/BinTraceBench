@@ -19,9 +19,8 @@ A secure backend API for binary analysis, benchmarking, and process inspection w
 ```bash
 git clone https://github.com/ashborn3/BinTraceBench.git
 cd BinTraceBench
-go mod tidy
-go build -o bintracebench.out ./cmd/bintracebench
-go build -o bintracer.out ./internal/tools/bintracer.go
+docker build -t bintracebench .
+docker run -p 8080:8080 bintracebench
 ```
 
 ### Configuration
